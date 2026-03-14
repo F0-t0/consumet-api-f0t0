@@ -58,6 +58,11 @@ async function resolveAnimePaheDownloadUrl(kwik: Kwik, downloadUrl: string) {
 
     if (match?.[1]) {
       effectiveUrl = match[1];
+    } else {
+      console.warn(
+        '[animepahe/watch] pahe shortlink redirect pattern not found:',
+        shortlinkHtml.slice(0, 500),
+      );
     }
   }
 
