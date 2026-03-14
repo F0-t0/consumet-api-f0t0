@@ -100,7 +100,10 @@ const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
 
       reply.status(200).send(res);
     } catch (err) {
-      console.log(err);
+      console.error(
+        '[animepahe/watch] fetchEpisodeSources failed:',
+        err instanceof Error ? err.stack || err.message : err,
+      );
       reply
         .status(500)
         .send({ message: 'Something went wrong. Contact developer for help.' });
