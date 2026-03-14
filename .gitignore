@@ -8,3 +8,6 @@ test.ts
 dist
 package-lock.json
 yarn.lock
+.vercel
+.codex-consumet.log
+.codex-consumet.err.log
