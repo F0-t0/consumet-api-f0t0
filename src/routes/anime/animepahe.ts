@@ -9,6 +9,8 @@ import { Redis } from 'ioredis';
 
 const ANIMEPAHE_BASE_URL = 'https://animepahe.si';
 const KWIK_REFERER = 'https://kwik.cx/';
+const PAHE_WIN_REDIRECT_PATTERN =
+  /a\.redirect"\)\.attr\("href","(https:\/\/[^"]+)"/i;
 
 function buildAnimePaheHeaders(sessionId?: string | false) {
   return {
@@ -31,6 +33,26 @@ function buildAnimePaheHeaders(sessionId?: string | false) {
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36',
     'x-requested-with': 'XMLHttpRequest',
   };
+}
+
+async function resolveAnimePaheDownloadUrl(kwik: Kwik, downloadUrl: string) {
+  let effectiveUrl = downloadUrl;
+
+  if (/^https?:\/\/pahe\.win\//i.test(downloadUrl)) {
+    const shortlinkResponse = await fetch(downloadUrl, {
+      headers: {
+        Referer: ANIMEPAHE_BASE_URL,
+      },
+    });
+    const shortlinkHtml = await shortlinkResponse.text();
+    const match = shortlinkHtml.match(PAHE_WIN_REDIRECT_PATTERN);
+
+    if (match?.[1]) {
+      effectiveUrl = match[1];
+    }
+  }
+
+  return (await kwik.getDirectDownloadLink(new URL(effectiveUrl))) ?? effectiveUrl;
 }
 
 async function fetchAnimePaheSourcesWithFallback(episodeId: string) {
@@ -94,7 +116,7 @@ async function fetchAnimePaheSourcesWithFallback(episodeId: string) {
     }
 
     try {
-      const directUrl = await kwik.getDirectDownloadLink(new URL(download.url));
+      const directUrl = await resolveAnimePaheDownloadUrl(kwik, download.url);
 
       downloads.push({
         quality: download.quality,
